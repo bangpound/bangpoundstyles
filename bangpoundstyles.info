@@ -1,0 +1,6 @@
+name = !&# Styles
+core = 7.x
+package = !&#
+description = custom module hosted at https://github.com/bangpound/bangpoundstyles
+php = 5.2.4
+dependencies[] = stylizer

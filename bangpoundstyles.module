@@ -1,0 +1,84 @@
+<?php
+
+/**
+ * Implements hook_ctools_plugin_directory()
+ */
+function bangpoundstyles_ctools_plugin_directory($module, $plugin) {
+  if (($module == 'panels' && $plugin == 'styles') || ($module == 'stylizer' && $plugin == 'style_bases')) {
+    return 'plugins/' . $plugin;
+  }
+}
+
+function bangpoundstyles_get_stylizer_styles() {
+  ctools_include('plugins', 'panels');
+  $plugins = array();
+  foreach (panels_get_styles() as $plugin) {
+    if (strstr($plugin['name'], ':')) {
+      list($type, ) = explode(':', $plugin['name']);
+      if ($type == 'stylizer') {
+        $style = $plugin['style'];
+        $plugins[$style->name] = $style;
+      }
+    }
+  }
+  return $plugins;
+}
+
+/**
+ * Implements hook_panels_pane_content_alter().
+ */
+function bangpoundstyles_panels_pane_content_alter($content, $pane, $panel_args, $context, $render, $display) {
+  if (isset($pane->style['style'])) {
+    $plugin = panels_get_style($pane->style['style']);
+    if ($plugin['name'] == 'bangpoundstyles') {
+      $content->content['#panels_pane'] = array(
+        'pane' => $pane,
+      );
+    }
+  }
+}
+
+/**
+ * Implement hook_preprocess_file_entity().
+ */
+function bangpoundstyles_preprocess(&$variables, $hook) {
+  $info = theme_get_registry(FALSE);
+  if (isset($info[$hook]['render element'])) {
+    $element = &$variables[$info[$hook]['render element']];
+    if (isset($element['#panels_pane'])) {
+
+      // Pull out the pane object that was stashed earlier.
+      $pane = $element['#panels_pane']['pane'];
+
+      // Set the CSS class of the node to the CSS class on the pane. This is
+      // useful because you can set the pane style to "naked" and still specify
+      // class and id on node wrapper.
+      if (isset($pane->css['css_class'])) {
+        $variables['classes_array'][] = $pane->css['css_class'];
+      }
+
+      $plugin = panels_get_style('stylizer');
+
+      foreach (array_keys(array_filter($pane->style['settings']['styles'])) as $name) {
+        $settings = _panels_stylizer_get_style($plugin, array('style' => $name));
+
+        if (!empty($settings['classes'])) {
+
+          // clases_array is set in template_preprocess().
+          $variables['classes_array'] = array_merge($variables['classes_array'], $settings['classes']);
+        }
+
+        foreach (array('title', 'content') as $key) {
+          if (!empty($settings[$key .'_classes'])) {
+
+            // content_ and title_attributes_array may not have a class property yet.
+            if (!isset($variables[$key .'_attributes_array']['class'])) {
+              $variables[$key .'_attributes_array']['class'] = array();
+            }
+            $variables[$key .'_attributes_array']['class'] = array_merge($variables[$key .'_attributes_array']['class'], $settings[$key .'_classes']);
+          }
+        }
+      }
+    }
+  }
+}
