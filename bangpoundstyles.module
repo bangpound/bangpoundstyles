@@ -31,9 +31,23 @@ function bangpoundstyles_panels_pane_content_alter($content, $pane, $panel_args,
   if (isset($pane->style['style'])) {
     $plugin = panels_get_style($pane->style['style']);
     if ($plugin['name'] == 'bangpoundstyles') {
-      $content->content['#panels_pane'] = array(
-        'pane' => $pane,
-      );
+      if (!is_array($content->content)) {
+        $content->content = array(
+          '#markup' => $content->content,
+        );
+      }
+      if ($pane->style['settings']['children']) {
+        foreach (element_children($content->content) as $child_key) {
+          $content->content[$child_key]['#panels_pane'] = array(
+            'pane' => $pane,
+          );
+        }
+      }
+      else {
+        $content->content['#panels_pane'] = array(
+          'pane' => $pane,
+        );
+      }
     }
   }
 }
@@ -59,13 +73,6 @@ function bangpoundstyles_preprocess(&$variables, $hook) {
   }
   if (isset($pane)) {
 
-    // Set the CSS class of the node to the CSS class on the pane. This is
-    // useful because you can set the pane style to "naked" and still specify
-    // class and id on node wrapper.
-    if (isset($pane->css['css_class'])) {
-      $variables['classes_array'][] = $pane->css['css_class'];
-    }
-
     $plugin = panels_get_style('stylizer');
 
     foreach (array_keys(array_filter($pane->style['settings']['styles'])) as $name) {
@@ -74,7 +81,7 @@ function bangpoundstyles_preprocess(&$variables, $hook) {
       if (!empty($settings['classes'])) {
 
         // clases_array is set in template_preprocess().
-        $variables['classes_array'] = array_merge($variables['classes_array'], $settings['classes']);
+        $variables['classes_array'] = array_unique(array_merge($variables['classes_array'], $settings['classes']));
       }
 
       foreach (array('title', 'content') as $key) {
@@ -84,7 +91,7 @@ function bangpoundstyles_preprocess(&$variables, $hook) {
           if (!isset($variables[$key .'_attributes_array']['class'])) {
             $variables[$key .'_attributes_array']['class'] = array();
           }
-          $variables[$key .'_attributes_array']['class'] = array_merge($variables[$key .'_attributes_array']['class'], $settings[$key .'_classes']);
+          $variables[$key .'_attributes_array']['class'] = array_unique(array_merge($variables[$key .'_attributes_array']['class'], $settings[$key .'_classes']));
         }
       }
     }

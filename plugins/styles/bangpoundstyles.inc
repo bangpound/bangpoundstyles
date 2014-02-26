@@ -14,6 +14,11 @@ if (module_exists('bangpoundstyles')) {
 
     'render pane' => 'bangpoundstyle_style_render_pane',
     'pane settings form' => 'bangpoundstyles_style_settings_form',
+    'defaults' => array(
+      'styles' => array(),
+      'hook' => 'panels_naked_style_render_pane',
+      'children' => FALSE,
+    ),
 
   //  'settings validate' => 'bangpoundstyles_style_settings_validate',
   );
@@ -51,6 +56,12 @@ function bangpoundstyles_style_settings_form($style_settings) {
     '#title' => t('Theme hook'),
     '#options' => $options,
     '#default_value' => (isset($style_settings['hook'])) ? $style_settings['hook'] : 'panels_naked_style_render_pane',
+  );
+  $form['children'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Apply to children'),
+    '#return_value' => TRUE,
+    '#default_value' => (isset($style_settings['children'])) ? $style_settings['children'] : FALSE,
   );
 
   return $form;
