@@ -31,7 +31,7 @@ function bangpoundstyles_panels_pane_content_alter($content, $pane, $panel_args,
   if (isset($pane->style['style'])) {
     $plugin = panels_get_style($pane->style['style']);
     if ($plugin['name'] == 'bangpoundstyles') {
-      if (!is_array($content->content)) {
+      if ($content && !is_array($content->content)) {
         $content->content = array(
           '#markup' => $content->content,
         );
