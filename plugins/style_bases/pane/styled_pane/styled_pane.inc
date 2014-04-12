@@ -19,6 +19,7 @@ $plugin = array(
     'classes' => array('panel-pane'),
     'title_classes' => array('pane-title'),
     'content_classes' => array('pane-content'),
+    'attributes' => array(),
     'palette' => array(),
   ),
   'palette' => array(
@@ -46,6 +47,11 @@ function bangpoundpanels_styled_pane_style_settings(&$form, &$form_state) {
     '#default_value' => implode(' ', $form_state['settings']['content_classes']),
     '#description' => t('This setting is inoperable unless <code>panels-pane.tpl.php</code> is overridden.'),
   );
+  $form['attributes'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Attributes'),
+    '#default_value' => \Symfony\Component\Yaml\Yaml::dump($form_state['settings']['attributes']),
+  );
   $form['palette'] = array(
     '#type' => 'value',
     '#value' => array(),
@@ -54,7 +60,16 @@ function bangpoundpanels_styled_pane_style_settings(&$form, &$form_state) {
 
 function bangpoundpanels_styled_pane_style_settings_validate(&$form, &$form_state) {
   foreach (array_keys($form_state['base_style_plugin']['defaults']) as $key) {
-    if ($key != 'palette') {
+    if ('attributes' === $key) {
+      $value = trim($form_state['values'][$key]);
+      if (!empty($value)) {
+        $form_state['values'][$key] = \Symfony\Component\Yaml\Yaml::parse($value);
+      }
+      else {
+        $form_state['values'][$key] = array();
+      }
+    }
+    else if ($key != 'palette') {
       $value = trim($form_state['values'][$key]);
       if (!empty($value)) {
         $form_state['values'][$key] = array_filter(explode(' ', $value));
