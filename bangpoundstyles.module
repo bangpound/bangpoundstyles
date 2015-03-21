@@ -4,61 +4,50 @@
  * Implements hook_ctools_plugin_directory()
  */
 function bangpoundstyles_ctools_plugin_directory($module, $plugin) {
-  if (($module == 'panels' && $plugin == 'styles') || ($module == 'stylizer' && $plugin == 'style_bases')) {
+  if ($module == 'panels' && $plugin == 'styles') {
     return 'plugins/' . $plugin;
   }
-}
-
-function bangpoundstyles_get_stylizer_styles() {
-  ctools_include('plugins', 'panels');
-  $plugins = array();
-  foreach (panels_get_styles() as $plugin) {
-    if (strstr($plugin['name'], ':')) {
-      list($type, ) = explode(':', $plugin['name']);
-      if ($type == 'stylizer') {
-        $style = $plugin['style'];
-        $plugins[$style->name] = $style;
-      }
-    }
-  }
-  return $plugins;
 }
 
 /**
  * Implements hook_panels_pane_content_alter().
  */
 function bangpoundstyles_panels_pane_content_alter($content, $pane, $panel_args, $context, $render, $display) {
-  if (isset($pane->style['style'])) {
-    $plugin = panels_get_style($pane->style['style']);
-    if ($plugin['name'] == 'bangpoundstyles') {
-      if ($content && !is_array($content->content)) {
-        $content->content = array(
-          '#markup' => $content->content,
-        );
-      }
-      if ($pane->style['settings']['children']) {
-        foreach (element_children($content->content) as $child_key) {
-          $content->content[$child_key]['#panels_pane'] = array(
-            'pane' => $pane,
-          );
-        }
-      }
-      else {
-        $content->content['#panels_pane'] = array(
+  // Entity view plugin only displays one entity, so restructure array to align with
+  // existing entity rendering content type plugins.
+  if ($pane->type == 'entity_view') {
+    $temp = array_pop($content->content);
+    $content->content = array_pop($temp);
+  }
+
+  if (isset($pane->style['style']) && $pane->style['style'] == 'bangpoundstyles') {
+    if ($content && !is_array($content->content)) {
+      $content->content = array(
+        '#markup' => $content->content,
+      );
+    }
+    if ($pane->style['settings']['children']) {
+      foreach (element_children($content->content) as $child_key) {
+        $content->content[$child_key]['#panels_pane'] = array(
           'pane' => $pane,
         );
       }
+    }
+    else {
+      $content->content['#panels_pane'] = array(
+        'pane' => $pane,
+      );
     }
   }
 }
 
 /**
- * Implement hook_preprocess_file_entity().
+ * Implement hook_preprocess().
  */
 function bangpoundstyles_preprocess(&$variables, $hook) {
   // Pull out the pane object that was stashed earlier.
   if ($hook == 'panels_pane') {
-    if (isset($variables['content']['#panels_pane'])) {
+    if (isset($variables['content']['#panels_pane']) && is_array($variables['content']['#panels_pane'])) {
       $pane = $variables['content']['#panels_pane']['pane'];
     }
   }
@@ -72,30 +61,27 @@ function bangpoundstyles_preprocess(&$variables, $hook) {
     }
   }
   if (isset($pane)) {
+    $settings = $pane->style['settings'];
+    if (!empty($settings['classes'])) {
 
-    $plugin = panels_get_style('stylizer');
-
-    foreach (array_keys(array_filter($pane->style['settings']['styles'])) as $name) {
-      $settings = _panels_stylizer_get_style($plugin, array('style' => $name));
-
-      if (!empty($settings['classes'])) {
-
-        // clases_array is set in template_preprocess().
-        $variables['classes_array'] = array_unique(array_merge($variables['classes_array'], $settings['classes']));
-      }
-
-      foreach (array('title', 'content') as $key) {
-        if (!empty($settings[$key .'_classes'])) {
-
-          // content_ and title_attributes_array may not have a class property yet.
-          if (!isset($variables[$key .'_attributes_array']['class'])) {
-            $variables[$key .'_attributes_array']['class'] = array();
-          }
-          $variables[$key .'_attributes_array']['class'] = array_unique(array_merge($variables[$key .'_attributes_array']['class'], $settings[$key .'_classes']));
-        }
-      }
-
-      $variables['attributes_array'] = array_unique(array_merge($variables['attributes_array'], $settings['attributes']));
+      // clases_array is set in template_preprocess().
+      $variables['classes_array'] = array_unique(array_merge($variables['classes_array'],
+        $settings['classes']));
     }
+
+    foreach (array('title', 'content') as $key) {
+      if (!empty($settings[$key . '_classes'])) {
+
+        // content_ and title_attributes_array may not have a class property yet.
+        if (!isset($variables[$key . '_attributes_array']['class'])) {
+          $variables[$key . '_attributes_array']['class'] = array();
+        }
+        $variables[$key . '_attributes_array']['class'] = array_unique(array_merge($variables[$key . '_attributes_array']['class'],
+          $settings[$key . '_classes']));
+      }
+    }
+
+    $variables['attributes_array'] = array_unique(array_merge($variables['attributes_array'],
+      $settings['attributes']));
   }
 }
