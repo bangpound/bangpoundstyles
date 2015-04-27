@@ -81,6 +81,9 @@ function bangpoundstyles_preprocess(&$variables, $hook) {
       }
     }
 
+    if (!isset($settings['attributes'])) {
+      $settings['attributes'] = array();
+    }
     $variables['attributes_array'] = array_unique(array_merge($variables['attributes_array'],
       $settings['attributes']));
   }
