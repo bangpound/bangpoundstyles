@@ -49,9 +49,9 @@ function bangpoundstyles_style_settings_form($style_settings) {
     '#description' => t('This setting is inoperable unless <code>panels-pane.tpl.php</code> is overridden.'),
   );
   $form['attributes'] = array(
-    '#type' => 'textarea',
+    '#type' => 'yaml',
     '#title' => t('Attributes'),
-    '#default_value' => (!empty($style_settings['attributes'])) ? \Symfony\Component\Yaml\Yaml::dump($style_settings['attributes']) : '',
+    '#default_value' => $style_settings['attributes'],
   );
 
   $options = array(
@@ -83,16 +83,7 @@ function bangpoundstyles_style_settings_form($style_settings) {
 
 function bangpoundstyles_style_settings_submit($form, &$settings, &$form_state) {
   foreach (array_keys($form_state['style']['defaults']) as $key) {
-    if ('attributes' === $key) {
-      $value = trim($settings[$key]);
-      if (!empty($value)) {
-        $settings[$key] = \Symfony\Component\Yaml\Yaml::parse($value);
-      }
-      else {
-        $settings[$key] = array();
-      }
-    }
-    else if (in_array($key, array('classes', 'title_classes', 'content_classes'))) {
+    if (in_array($key, array('classes', 'title_classes', 'content_classes'))) {
       $value = trim($settings[$key]);
       if (!empty($value)) {
         $settings[$key] = array_filter(explode(' ', $value));
