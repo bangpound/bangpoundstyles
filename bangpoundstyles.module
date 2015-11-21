@@ -16,8 +16,9 @@ function bangpoundstyles_panels_pane_content_alter($content, $pane, $panel_args,
   // Entity view plugin only displays one entity, so restructure array to align with
   // existing entity rendering content type plugins.
   if ($pane->type == 'entity_view') {
-    $temp = array_pop($content->content);
-    $content->content = array_pop($temp);
+    $entity_type = array_pop(element_children($content->content));
+    $entity_id = array_pop(element_children($content->content[$entity_type]));
+    $content->content = $content->content[$entity_type][$entity_id];
   }
 
   if (isset($pane->style['style']) && $pane->style['style'] == 'bangpoundstyles') {
