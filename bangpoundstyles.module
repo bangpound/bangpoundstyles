@@ -18,8 +18,10 @@ function bangpoundstyles_panels_pane_content_alter($content, $pane, $panel_args,
   if ($pane->type == 'entity_view') {
     $children = element_children($content->content);
     $entity_type = array_pop($children);
+
     $children = element_children($content->content[$entity_type]);
     $entity_id = array_pop($children);
+
     $content->content = $content->content[$entity_type][$entity_id];
   }
 
