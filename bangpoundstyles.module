@@ -4,18 +4,21 @@
  * Implements hook_ctools_plugin_directory()
  */
 function bangpoundstyles_ctools_plugin_directory($module, $plugin) {
-  if ($module == 'panels' && $plugin == 'styles') {
+  if ($module === 'panels' && $plugin === 'styles') {
     return 'plugins/' . $plugin;
   }
 }
 
 /**
  * Implements hook_panels_pane_content_alter().
+ *
+ * @param $content
+ * @param $pane
  */
-function bangpoundstyles_panels_pane_content_alter($content, $pane, $panel_args, $context, $render, $display) {
+function bangpoundstyles_panels_pane_content_alter($content, $pane) {
   // Entity view plugin only displays one entity, so restructure array to align with
   // existing entity rendering content type plugins.
-  if ($pane->type == 'entity_view') {
+  if ($pane->type === 'entity_view') {
     $children = element_children($content->content);
     $entity_type = array_pop($children);
 
@@ -25,13 +28,13 @@ function bangpoundstyles_panels_pane_content_alter($content, $pane, $panel_args,
     $content->content = $content->content[$entity_type][$entity_id];
   }
 
-  if (isset($pane->style['style']) && $pane->style['style'] == 'bangpoundstyles') {
+  if (isset($pane->style['style']) && $pane->style['style'] === 'bangpoundstyles') {
     if ($content && !is_array($content->content)) {
       $content->content = array(
         '#markup' => $content->content,
       );
     }
-    if ($pane->style['settings']['children']) {
+    if (isset($content->content) && $pane->style['settings']['children']) {
       $children = $content->content;
       foreach (element_children($children) as $child_key) {
         $content->content[$child_key]['#panels_pane'] = array(
@@ -52,7 +55,7 @@ function bangpoundstyles_panels_pane_content_alter($content, $pane, $panel_args,
  */
 function bangpoundstyles_preprocess(&$variables, $hook) {
   // Pull out the pane object that was stashed earlier.
-  if ($hook == 'panels_pane') {
+  if ($hook === 'panels_pane') {
     if (isset($variables['content']['#panels_pane']) && is_array($variables['content']['#panels_pane'])) {
       $pane = $variables['content']['#panels_pane']['pane'];
     }
